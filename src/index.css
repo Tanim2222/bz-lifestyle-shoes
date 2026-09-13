@@ -1,0 +1,517 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  --ease-spring:     cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-expo:   cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-in-out-smooth: cubic-bezier(0.45, 0, 0.15, 1);
+  --duration-fast:   180ms;
+  --duration-med:    350ms;
+  --duration-slow:   600ms;
+  --glow-white:      rgba(255, 255, 255, 0.08);
+  --glow-border:     rgba(255, 255, 255, 0.14);
+  --shadow-card:     0 24px 64px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4);
+  --shadow-card-hover: 0 36px 80px rgba(0,0,0,0.7), 0 12px 32px rgba(0,0,0,0.5);
+}
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+}
+
+/* ============================================================
+   BASE — rendering quality, font smoothing
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+}
+
+body {
+  background-color: #ffffff;
+  color: #171717;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  letter-spacing: 0.012em;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   SCROLLBAR — 2px hairline, premium dark
+   ============================================================ */
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+::-webkit-scrollbar { width: 2px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.08);
+  border-radius: 100px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+/* ============================================================
+   TEXT SELECTION
+   ============================================================ */
+::selection {
+  background: rgba(45,212,191,0.22);
+  color: #fff;
+}
+
+/* ============================================================
+   AURORA — slow, gentle, barely visible
+   ============================================================ */
+@keyframes auroraShift {
+  0%   { transform: rotate(0deg)   translateX(0)    translateY(0);   }
+  25%  { transform: rotate(2deg)   translateX(20px) translateY(-15px); }
+  50%  { transform: rotate(-1deg)  translateX(35px) translateY(-25px); }
+  75%  { transform: rotate(3deg)   translateX(-15px) translateY(10px); }
+  100% { transform: rotate(0deg)   translateX(0)    translateY(0);   }
+}
+@keyframes auroraShift2 {
+  0%   { transform: rotate(0deg)   translateX(0)    translateY(0);   }
+  33%  { transform: rotate(-3deg)  translateX(-20px) translateY(25px); }
+  66%  { transform: rotate(2deg)   translateX(15px) translateY(-12px); }
+  100% { transform: rotate(0deg)   translateX(0)    translateY(0);   }
+}
+@keyframes auroraShift3 {
+  0%   { transform: rotate(0deg)   scale(1); }
+  50%  { transform: rotate(4deg)   scale(1.05); }
+  100% { transform: rotate(0deg)   scale(1); }
+}
+
+/* Soft light-beam sweep */
+@keyframes beamSweep {
+  0%   { opacity: 0;     transform: rotate(-12deg) translateX(-150px); }
+  20%  { opacity: 0.035; }
+  80%  { opacity: 0.035; }
+  100% { opacity: 0;     transform: rotate(-12deg) translateX(150px); }
+}
+
+/* Floating light orb */
+@keyframes floatOrb {
+  0%   { transform: translateY(0) translateX(0)    scale(1);    }
+  33%  { transform: translateY(-18px) translateX(12px) scale(1.04); }
+  66%  { transform: translateY(10px)  translateX(-8px) scale(0.97); }
+  100% { transform: translateY(0) translateX(0)    scale(1);    }
+}
+
+.aurora-blob-1  { animation: auroraShift  32s ease-in-out infinite; }
+.aurora-blob-2  { animation: auroraShift2 40s ease-in-out infinite; }
+.aurora-blob-3  { animation: auroraShift3 28s ease-in-out infinite reverse; }
+.light-beam     { animation: beamSweep    22s ease-in-out infinite; }
+.float-orb      { animation: floatOrb     16s ease-in-out infinite; }
+
+/* ============================================================
+   PARTICLES / ORBITS — existing keyframes preserved
+   ============================================================ */
+@keyframes driftUp {
+  0%   { transform: translateY(100vh) translateX(0)   scale(1);   opacity: 0;    }
+  10%  { opacity: 0.28; }
+  90%  { opacity: 0.28; }
+  100% { transform: translateY(-20vh) translateX(40px) scale(0.5); opacity: 0;    }
+}
+@keyframes slowOrbit {
+  0%   { transform: translate(0, 0) rotate(0deg);   }
+  50%  { transform: translate(40px, -60px) rotate(180deg); }
+  100% { transform: translate(0, 0) rotate(360deg); }
+}
+@keyframes slowOrbitReverse {
+  0%   { transform: translate(0, 0) rotate(360deg); }
+  50%  { transform: translate(-50px, 40px) rotate(180deg); }
+  100% { transform: translate(0, 0) rotate(0deg);   }
+}
+
+.animate-drift   { animation: driftUp        24s infinite linear; }
+.animate-orbit-1 { animation: slowOrbit      30s infinite ease-in-out; }
+.animate-orbit-2 { animation: slowOrbitReverse 38s infinite ease-in-out; }
+
+/* Shop-the-collection conveyor belt — pure CSS so it never stutters or
+   depends on JS timers/rAF being scheduled promptly. */
+@keyframes shoeMarquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.shoe-marquee { animation: shoeMarquee 24s linear infinite; }
+
+@keyframes spotlightPulse {
+  0%, 100% { opacity: 0.11; transform: scale(1);    }
+  50%       { opacity: 0.17; transform: scale(1.06); }
+}
+.animate-spotlight { animation: spotlightPulse 9s infinite ease-in-out; }
+
+/* ============================================================
+   GRADIENT MESH BLOOM — decorative, zero layout impact
+   ============================================================ */
+@keyframes meshPulse {
+  0%, 100% { opacity: 0.04; filter: blur(70px); }
+  50%       { opacity: 0.07; filter: blur(90px); }
+}
+.gradient-mesh {
+  animation: meshPulse 14s ease-in-out infinite;
+  border-radius: 50%;
+  position: absolute;
+  pointer-events: none;
+}
+
+/* ============================================================
+   NAVBAR — premium glassmorphism
+   ============================================================ */
+
+/* Container glass upgrade */
+header > div > div {
+  /* Subtle inner border highlight */
+  box-shadow: 
+    0 8px 32px rgba(0,0,0,0.55),
+    0 1px 0 rgba(255,255,255,0.06) inset,
+    0 -1px 0 rgba(255,255,255,0.02) inset;
+}
+
+/* Nav link base */
+header nav button {
+  position: relative;
+  letter-spacing: 0.018em;
+  font-weight: 500;
+  transition: opacity var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+
+/* Animated center-out underline */
+header nav button::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.28s var(--ease-spring), left 0.28s var(--ease-spring);
+  border-radius: 2px;
+  opacity: 0.45;
+}
+header nav button:hover::after,
+header nav button:focus-visible::after {
+  width: 55%;
+  left: 22.5%;
+}
+
+/* Active nav link — sharper contrast */
+header nav button[class*="opacity-100"]::after,
+header nav button:where(:global(.active))::after {
+  width: 55%;
+  left: 22.5%;
+  opacity: 0.9;
+}
+
+/* ============================================================
+   GLASS CARDS — lift, glow, border brightening
+   ============================================================ */
+.glow-card {
+  transition:
+    box-shadow  var(--duration-med) var(--ease-spring),
+    transform   var(--duration-med) var(--ease-spring),
+    border-color var(--duration-med) var(--ease-spring);
+  will-change: transform, box-shadow;
+}
+.glow-card:hover {
+  transform: translateY(-7px) scale(1.005);
+  box-shadow: var(--shadow-card-hover), 0 0 0 1px rgba(255,255,255,0.11);
+}
+
+/* Global glass-panel polish */
+[class*="rounded-3xl"][class*="bg-white/5"],
+[class*="rounded-2xl"][class*="bg-white/5"] {
+  transition:
+    box-shadow   var(--duration-med) var(--ease-spring),
+    transform    var(--duration-med) var(--ease-spring),
+    border-color var(--duration-med) var(--ease-spring);
+  will-change: transform, box-shadow;
+}
+[class*="rounded-3xl"][class*="bg-white/5"]:hover,
+[class*="rounded-2xl"][class*="bg-white/5"]:hover {
+  box-shadow: var(--shadow-card), 0 0 0 1px rgba(255,255,255,0.13);
+  border-color: rgba(255,255,255,0.16) !important;
+  transform: translateY(-4px);
+}
+
+/* ============================================================
+   BUTTONS — spring scale + layered glow + ripple
+   ============================================================ */
+/* Wrapped in @layer base so Tailwind utility classes (which live in the
+   later `utilities` layer) always win regardless of specificity — CSS
+   cascade layers ignore specificity across layers, so an unlayered
+   `button { position: relative }` here would silently break every
+   `absolute`-positioned button (wishlist hearts, add-to-cart bars, etc.)
+   project-wide, no matter how specific their own classes were. */
+@layer base {
+  button {
+    position: relative;
+    overflow: hidden;
+    transition:
+      transform   var(--duration-fast) var(--ease-spring),
+      box-shadow  var(--duration-fast) var(--ease-spring),
+      opacity     0.18s ease;
+    will-change: transform;
+  }
+
+  button:hover  { transform: scale(1.035); }
+  button:active { transform: scale(0.965); transition-duration: 0.1s; }
+}
+
+/* Primary gradient buttons — extra outer glow */
+button[class*="bg-gradient-to-r"]:hover,
+button[class*="from-teal"]:hover,
+button[class*="from-red"]:hover {
+  box-shadow: 0 0 28px rgba(45,212,191,0.25), 0 8px 24px rgba(0,0,0,0.4);
+}
+
+/* Ripple */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.26);
+  transform: scale(0);
+  animation: ripple-animation 0.7s var(--ease-out-expo) forwards;
+  pointer-events: none;
+}
+@keyframes ripple-animation {
+  to { transform: scale(5); opacity: 0; }
+}
+
+/* Focus ring — accessible */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.5);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ============================================================
+   ICONS — precise 5° hover rotation, glow
+   ============================================================ */
+svg {
+  transition: transform 0.28s var(--ease-spring), opacity 0.28s ease, filter 0.28s ease;
+}
+
+button:hover > svg,
+button:hover svg,
+a:hover > svg,
+a:hover svg,
+[data-cursor-hover]:hover svg {
+  transform: scale(1.14) rotate(5deg);
+  filter: drop-shadow(0 0 4px rgba(255,255,255,0.25));
+}
+
+/* Arrow icons — keep directional, no rotation */
+button:hover svg[data-arrow],
+a:hover svg[data-arrow] {
+  transform: translateX(2px) scale(1.05);
+}
+
+/* ============================================================
+   LINKS — smooth underline sweep
+   ============================================================ */
+.hover-underline {
+  position: relative;
+  transition: color 0.22s ease, opacity 0.22s ease;
+}
+.hover-underline::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  transform: scaleX(0);
+  height: 1px;
+  bottom: -2px;
+  left: 0;
+  background: currentColor;
+  transform-origin: right center;
+  transition: transform 0.32s var(--ease-spring);
+  border-radius: 2px;
+  opacity: 0.65;
+}
+.hover-underline:hover::after {
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+
+/* ============================================================
+   INPUTS / TEXTAREA — premium focus ring
+   ============================================================ */
+input, textarea {
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+input:focus, textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 1.5px rgba(255,255,255,0.2), 0 0 24px rgba(45,212,191,0.07);
+  border-color: rgba(255,255,255,0.3) !important;
+}
+
+/* ============================================================
+   TYPOGRAPHY — premium rendering details
+   ============================================================ */
+
+/* Section headings — optical kerning */
+h1, h2, h3 {
+  font-kerning: auto;
+  letter-spacing: -0.01em;
+}
+
+/* Serif italic — tighter tracking for elegance */
+.font-serif {
+  font-feature-settings: "liga" 1, "dlig" 1;
+  letter-spacing: -0.02em;
+}
+
+/* Mono — tighter, crisper */
+.font-mono {
+  font-feature-settings: "tnum" 1, "zero" 1;
+  letter-spacing: -0.01em;
+}
+
+/* Body paragraphs */
+p {
+  line-height: 1.75;
+}
+
+/* Small caps labels */
+[class*="uppercase"][class*="tracking-"] {
+  font-feature-settings: "cpsp" 1;
+}
+
+/* ============================================================
+   SECTION DIVIDERS — subtle glow edge
+   ============================================================ */
+.border-t {
+  border-image: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent) 1;
+}
+
+/* ============================================================
+   PROGRESS BARS — polished fill
+   ============================================================ */
+[class*="bg-neutral-900"][class*="h-1"],
+[class*="h-1"][class*="rounded-full"] {
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* ============================================================
+   SCROLL ANIMATION — smoothed easing
+   ============================================================ */
+[class*="whileInView"] {
+  transition-timing-function: var(--ease-spring);
+}
+
+/* ============================================================
+   AMBIENT SHADOW — sections get soft ground shadow
+   ============================================================ */
+section,
+[id="features"],
+[id="technology"],
+[id="color-variants"],
+[id="performance-stats"],
+[id="stores"],
+[id="reservation"] {
+  position: relative;
+}
+
+/* ============================================================
+   FOOTER — refined transitions
+   ============================================================ */
+footer a {
+  transition:
+    transform  0.32s var(--ease-spring),
+    color      0.22s ease,
+    box-shadow 0.32s ease,
+    border-color 0.28s ease,
+    opacity    0.22s ease;
+  will-change: transform;
+}
+footer a:hover {
+  transform: translateY(-3px) scale(1.12);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+}
+
+/* Footer nav link hover */
+footer p, footer span, footer a[class*="text-neutral"] {
+  transition: color 0.22s ease, opacity 0.22s ease;
+}
+footer a[class*="text-neutral"]:hover {
+  color: rgba(255,255,255,0.8);
+}
+
+/* ============================================================
+   STAT COUNTER — numeric highlight
+   ============================================================ */
+.font-mono.font-bold {
+  text-shadow: 0 0 20px rgba(255,255,255,0.06);
+}
+
+/* ============================================================
+   PERFORMANCE — GPU compositing layers
+   ============================================================ */
+.animate-drift,
+.animate-orbit-1,
+.animate-orbit-2,
+.aurora-blob-1,
+.aurora-blob-2,
+.aurora-blob-3,
+.float-orb,
+.gradient-mesh,
+.light-beam {
+  will-change: transform, opacity;
+  contain: layout style paint;
+  transform: translateZ(0);
+}
+
+/* Cards + buttons — only promote on hover to avoid layer explosion */
+.glow-card,
+[class*="rounded-3xl"][class*="bg-white/5"] {
+  transform: translateZ(0);
+}
+
+/* ============================================================
+   REDUCED MOTION — full accessibility compliance
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration:       0.01ms !important;
+    animation-iteration-count: 1    !important;
+    transition-duration:      0.01ms !important;
+    scroll-behavior: auto           !important;
+  }
+  .aurora-blob-1,
+  .aurora-blob-2,
+  .aurora-blob-3,
+  .float-orb,
+  .gradient-mesh,
+  .light-beam,
+  .animate-drift {
+    display: none;
+  }
+  /* Restore static transforms */
+  .glow-card:hover,
+  [class*="rounded-3xl"][class*="bg-white/5"]:hover,
+  [class*="rounded-2xl"][class*="bg-white/5"]:hover {
+    transform: none;
+  }
+  button:hover { transform: none; }
+  footer a:hover { transform: none; }
+}
+
+/* ============================================================
+   HIGH-CONTRAST — a11y
+   ============================================================ */
+@media (forced-colors: active) {
+  button:focus-visible { outline: 3px solid ButtonText; }
+}

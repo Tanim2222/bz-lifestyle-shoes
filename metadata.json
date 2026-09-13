@@ -1,0 +1,8 @@
+{
+  "name": "BZ Lifestyle Shoes — Hero Section",
+  "description": "The BZ Lifestyle Shoes landing page hero section with a sleek plain black background and a premium teal-blue color theme.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

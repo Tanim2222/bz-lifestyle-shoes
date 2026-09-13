@@ -1,0 +1,7 @@
+shoe.glb — "Materials Variants Shoe"
+Source: https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/MaterialsVariantsShoe
+Copyright 2021, Shopify
+License: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+
+This model is used as a placeholder 3D shoe for the interactive scroll viewer.
+Attribution required when redistributing: "Materials Variants Shoe" by Shopify, CC BY 4.0.

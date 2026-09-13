@@ -1,0 +1,9 @@
+diffusers
+transformers
+accelerate
+fastapi
+uvicorn[standard]
+pillow
+pydantic
+rembg
+onnxruntime
