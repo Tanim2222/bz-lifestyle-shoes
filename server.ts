@@ -3,7 +3,7 @@ import crypto from "crypto";
 import express from "express";
 import { createClient } from "@supabase/supabase-js";
 
-const PORT = 8787;
+const PORT = process.env.PORT ? Number(process.env.PORT) : 8787;
 const PYTHON_SERVICE_URL = "http://localhost:8001";
 
 const PAYMONGO_API = "https://api.paymongo.com/v1";
