@@ -119,7 +119,7 @@ export async function sendMessage(
 
 export function subscribeToMessages(conversationId: string, onInsert: (message: ChatMessage) => void): () => void {
   const channel = supabase
-    .channel(`chat_messages:${conversationId}`)
+    .channel(`chat_messages:${conversationId}:${Math.random().toString(36).slice(2)}`)
     .on(
       "postgres_changes",
       { event: "INSERT", schema: "public", table: "chat_messages", filter: `conversation_id=eq.${conversationId}` },
@@ -141,8 +141,11 @@ export async function listConversations(): Promise<ChatConversation[]> {
 }
 
 export function subscribeToConversations(onChange: () => void): () => void {
+  // Both the notification bell and the support inbox subscribe to this at
+  // the same time on /admin/support — a random suffix keeps their channels
+  // from colliding (Supabase errors if two channels share an exact name).
   const channel = supabase
-    .channel("chat_conversations:admin")
+    .channel(`chat_conversations:admin:${Math.random().toString(36).slice(2)}`)
     .on("postgres_changes", { event: "*", schema: "public", table: "chat_conversations" }, onChange)
     .subscribe();
 
