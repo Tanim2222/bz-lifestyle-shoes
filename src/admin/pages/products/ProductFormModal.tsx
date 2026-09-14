@@ -26,6 +26,7 @@ interface FormState {
   name: string;
   categoryId: string;
   price: string;
+  compareAtPrice: string;
   description: string;
   colorway: string;
   imageUrl: string;
@@ -39,6 +40,7 @@ function toFormState(product: Product | null, categories: Category[]): FormState
       name: product.name,
       categoryId: product.categoryId,
       price: String(product.price),
+      compareAtPrice: product.compareAtPrice === null ? "" : String(product.compareAtPrice),
       description: product.description,
       colorway: product.colorway,
       imageUrl: product.imageUrl,
@@ -50,6 +52,7 @@ function toFormState(product: Product | null, categories: Category[]): FormState
     name: "",
     categoryId: categories[0]?.id ?? "",
     price: "",
+    compareAtPrice: "",
     description: "",
     colorway: "",
     imageUrl: FALLBACK_IMAGE,
@@ -166,6 +169,12 @@ export default function ProductFormModal({
     if (!form.categoryId) next.categoryId = "Select a category.";
     const priceNum = Number(form.price);
     if (!form.price || Number.isNaN(priceNum) || priceNum <= 0) next.price = "Enter a valid price greater than 0.";
+    if (form.compareAtPrice.trim()) {
+      const compareNum = Number(form.compareAtPrice);
+      if (Number.isNaN(compareNum) || compareNum <= priceNum) {
+        next.compareAtPrice = "Compare-at price must be greater than the actual price.";
+      }
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -179,6 +188,7 @@ export default function ProductFormModal({
         name: form.name.trim(),
         categoryId: form.categoryId,
         price: Number(form.price),
+        compareAtPrice: form.compareAtPrice.trim() ? Number(form.compareAtPrice) : null,
         description: form.description.trim(),
         colorway: form.colorway.trim(),
         imageUrl: form.imageUrl,
@@ -406,6 +416,20 @@ export default function ProductFormModal({
               className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
             />
             {errors.price && <p className="text-xs text-red-400">{errors.price}</p>}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-white/70 uppercase tracking-wider">Compare-at Price (₱)</label>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={form.compareAtPrice}
+              onChange={(e) => setField("compareAtPrice", e.target.value)}
+              placeholder="Optional — shows a SALE badge"
+              className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
+            />
+            {errors.compareAtPrice && <p className="text-xs text-red-400">{errors.compareAtPrice}</p>}
           </div>
         </div>
 

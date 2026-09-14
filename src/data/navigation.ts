@@ -11,18 +11,21 @@ export interface NavItem {
 }
 
 // Header nav + mega-menu content. Pure config — swap labels/hrefs/links here
-// without touching Header.tsx or MegaMenu.tsx.
+// without touching Header.tsx or MegaMenu.tsx. Shoe links point at the real
+// catalog (/shop, optionally ?category=<name>) rather than a same-page
+// anchor; apparel/accessories links stay "#" since those aren't real
+// product categories yet — wire them up once they are.
 export const navItems: NavItem[] = [
   {
     label: "Men",
-    href: "#featured",
+    href: "/shop",
     megaMenu: [
       {
         heading: "Shoes",
         links: [
-          { label: "Basketball", href: "#shop-by-category" },
-          { label: "Running", href: "#shop-by-category" },
-          { label: "Lifestyle", href: "#shop-by-category" },
+          { label: "Basketball", href: "/shop?category=Basketball" },
+          { label: "Running", href: "/shop?category=Running" },
+          { label: "Lifestyle", href: "/shop?category=Lifestyle" },
         ],
       },
       {
@@ -37,14 +40,14 @@ export const navItems: NavItem[] = [
   },
   {
     label: "Women",
-    href: "#featured",
+    href: "/shop",
     megaMenu: [
       {
         heading: "Shoes",
         links: [
-          { label: "Running", href: "#shop-by-category" },
-          { label: "Lifestyle", href: "#shop-by-category" },
-          { label: "Training", href: "#" },
+          { label: "Running", href: "/shop?category=Running" },
+          { label: "Lifestyle", href: "/shop?category=Lifestyle" },
+          { label: "Training", href: "/shop" },
         ],
       },
       {
@@ -59,25 +62,25 @@ export const navItems: NavItem[] = [
   },
   {
     label: "Kids",
-    href: "#featured",
+    href: "/shop",
     megaMenu: [
       {
         heading: "Shoes",
         links: [
-          { label: "Big Kids", href: "#" },
-          { label: "Little Kids", href: "#" },
-          { label: "Toddler", href: "#" },
+          { label: "Big Kids", href: "/shop" },
+          { label: "Little Kids", href: "/shop" },
+          { label: "Toddler", href: "/shop" },
         ],
       },
       {
         heading: "More",
         links: [
-          { label: "New Arrivals", href: "#featured" },
+          { label: "New Arrivals", href: "/shop" },
           { label: "Accessories", href: "#" },
         ],
       },
     ],
   },
   { label: "Brands", href: "#brands" },
-  { label: "Sale", href: "#featured", accent: true },
+  { label: "Sale", href: "/shop?sale=true", accent: true },
 ];

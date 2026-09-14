@@ -9,22 +9,13 @@ function formatPeso(value: number): string {
   return `₱${value.toLocaleString("en-PH")}`;
 }
 
-// Deterministic (not random) so the same product always shows the same badge
-// across renders/refreshes — swap for a real `onSale`/`isNew` field on the
-// product once that exists.
-function badgeFor(index: number): { label: string; className: string } | null {
-  if (index % 3 === 0) return { label: "SALE", className: "bg-red-500 text-white" };
-  if (index % 3 === 1) return { label: "NEW", className: "bg-teal-400 text-black" };
-  return null;
-}
-
-export default function ProductCard({ product, categoryName, index = 0 }: { product: Product; categoryName: string; index?: number }) {
+export default function ProductCard({ product, categoryName }: { product: Product; categoryName: string; index?: number }) {
   const [justAdded, setJustAdded] = useState(false);
   const { addItem } = useCart();
   const { customer, openAuthModal } = useCustomerAuth();
   const { isWishlisted, toggle } = useWishlist();
   const liked = isWishlisted(product.id);
-  const badge = badgeFor(index);
+  const onSale = product.compareAtPrice !== null && product.compareAtPrice > product.price;
 
   const handleToggleWishlist = () => {
     if (!customer) {
@@ -52,9 +43,9 @@ export default function ProductCard({ product, categoryName, index = 0 }: { prod
   return (
     <div className="group bg-white border border-neutral-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
       <div className="relative bg-neutral-100 aspect-square flex items-center justify-center overflow-hidden">
-        {badge && (
-          <span className={`absolute top-3 left-3 z-10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide ${badge.className}`}>
-            {badge.label}
+        {onSale && (
+          <span className="absolute top-3 left-3 z-10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide bg-red-500 text-white">
+            SALE
           </span>
         )}
         <button
@@ -80,7 +71,10 @@ export default function ProductCard({ product, categoryName, index = 0 }: { prod
         </button>
       </div>
       <div className="p-4">
-        <p className="text-sm font-bold text-neutral-900">{formatPeso(product.price)}</p>
+        <div className="flex items-baseline gap-2">
+          <p className={`text-sm font-bold ${onSale ? "text-red-600" : "text-neutral-900"}`}>{formatPeso(product.price)}</p>
+          {onSale && <p className="text-xs text-neutral-400 line-through">{formatPeso(product.compareAtPrice!)}</p>}
+        </div>
         <p className="text-sm text-neutral-600">
           {product.name} {product.colorway}
         </p>

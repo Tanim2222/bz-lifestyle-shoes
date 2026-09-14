@@ -5,6 +5,7 @@ import App from './App.tsx';
 import AdminApp from './admin/AdminApp.tsx';
 import OrderConfirmation from './pages/OrderConfirmation.tsx';
 import ResetPassword from './pages/ResetPassword.tsx';
+import Shop from './pages/Shop.tsx';
 import AccountApp from './pages/account/AccountApp.tsx';
 import { CustomerAuthProvider } from './context/CustomerAuthContext.tsx';
 import { WishlistProvider } from './context/WishlistContext.tsx';
@@ -21,6 +22,7 @@ createRoot(document.getElementById('root')!).render(
               <Route path="/admin/*" element={<AdminApp />} />
               <Route path="/order-confirmation" element={<OrderConfirmation />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/shop" element={<Shop />} />
               <Route path="/account/*" element={<AccountApp />} />
               <Route path="/*" element={<App />} />
             </Routes>

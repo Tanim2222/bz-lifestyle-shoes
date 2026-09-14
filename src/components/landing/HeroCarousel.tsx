@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, type PanInfo } from "motion/react";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import Shoe3DViewer from "../Shoe3DViewer";
 import * as heroSlidesService from "../../admin/services/heroSlides.service";
@@ -63,7 +63,17 @@ export default function HeroCarousel() {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="relative w-full overflow-hidden border border-neutral-800 bg-neutral-900 min-h-[460px] sm:min-h-[520px] flex items-center">
+      <motion.div
+        className="relative w-full overflow-hidden border border-neutral-800 bg-neutral-900 min-h-[460px] sm:min-h-[520px] flex items-center touch-pan-y"
+        drag={slide.is3d ? false : "x"}
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.15}
+        onDragEnd={(_, info: PanInfo) => {
+          const SWIPE_THRESHOLD = 60;
+          if (info.offset.x < -SWIPE_THRESHOLD) goTo(index + 1);
+          else if (info.offset.x > SWIPE_THRESHOLD) goTo(index - 1);
+        }}
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={slide.id}
@@ -157,7 +167,7 @@ export default function HeroCarousel() {
             </div>
           </>
         )}
-      </div>
+      </motion.div>
     </section>
   );
 }

@@ -8,6 +8,7 @@ export interface Product {
   name: string;
   categoryId: string;
   price: number;
+  compareAtPrice: number | null;
   description: string;
   imageUrl: string;
   colorway: string;

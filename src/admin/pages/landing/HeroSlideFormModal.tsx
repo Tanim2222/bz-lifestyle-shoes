@@ -22,7 +22,7 @@ export default function HeroSlideFormModal({
   const [title, setTitle] = useState(slide?.title ?? "");
   const [subtitle, setSubtitle] = useState(slide?.subtitle ?? "");
   const [ctaLabel, setCtaLabel] = useState(slide?.ctaLabel ?? "Shop Now");
-  const [ctaHref, setCtaHref] = useState(slide?.ctaHref ?? "#featured");
+  const [ctaHref, setCtaHref] = useState(slide?.ctaHref ?? "/shop");
   const [imageUrl, setImageUrl] = useState<string | null>(slide?.imageUrl ?? null);
   const [videoUrl, setVideoUrl] = useState<string | null>(slide?.videoUrl ?? null);
   const [mediaMode, setMediaMode] = useState<"image" | "video">(slide?.videoUrl ? "video" : "image");
@@ -71,7 +71,7 @@ export default function HeroSlideFormModal({
         title: title.trim(),
         subtitle: subtitle.trim(),
         ctaLabel: ctaLabel.trim() || "Shop Now",
-        ctaHref: ctaHref.trim() || "#featured",
+        ctaHref: ctaHref.trim() || "/shop",
         imageUrl: mediaMode === "image" ? imageUrl : null,
         videoUrl: mediaMode === "video" ? videoUrl : null,
         is3d,

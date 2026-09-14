@@ -21,7 +21,7 @@ export default function PromoBannerFormModal({
   const [title, setTitle] = useState(banner?.title ?? "");
   const [copy, setCopy] = useState(banner?.copy ?? "");
   const [ctaLabel, setCtaLabel] = useState(banner?.ctaLabel ?? "Shop Now");
-  const [href, setHref] = useState(banner?.href ?? "#featured");
+  const [href, setHref] = useState(banner?.href ?? "/shop");
   const [imageUrl, setImageUrl] = useState<string | null>(banner?.imageUrl ?? null);
   const [accentColor, setAccentColor] = useState<AccentColor>(banner?.accentColor ?? "teal");
   const [active, setActive] = useState(banner?.active ?? true);
@@ -54,7 +54,7 @@ export default function PromoBannerFormModal({
         title: title.trim(),
         copy: copy.trim(),
         ctaLabel: ctaLabel.trim() || "Shop Now",
-        href: href.trim() || "#featured",
+        href: href.trim() || "/shop",
         imageUrl,
         accentColor,
         sortOrder: banner?.sortOrder ?? nextSortOrder,

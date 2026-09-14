@@ -94,7 +94,14 @@ export default function ShoeCarousel() {
               </button>
             </div>
             <div className="p-4">
-              <p className="text-sm font-bold text-neutral-900">{formatPeso(p.price)}</p>
+              <div className="flex items-baseline gap-2">
+                <p className={`text-sm font-bold ${p.compareAtPrice && p.compareAtPrice > p.price ? "text-red-600" : "text-neutral-900"}`}>
+                  {formatPeso(p.price)}
+                </p>
+                {p.compareAtPrice && p.compareAtPrice > p.price && (
+                  <p className="text-xs text-neutral-400 line-through">{formatPeso(p.compareAtPrice)}</p>
+                )}
+              </div>
               <p className="text-sm text-neutral-600">{p.name} {p.colorway}</p>
               <p className="text-xs text-teal-600">{categoryName(p.categoryId)}</p>
             </div>

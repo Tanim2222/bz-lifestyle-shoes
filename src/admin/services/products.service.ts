@@ -6,6 +6,7 @@ interface ProductRow {
   name: string;
   category_id: string;
   price: number;
+  compare_at_price: number | null;
   description: string;
   image_url: string;
   colorway: string;
@@ -21,6 +22,7 @@ function mapRow(row: ProductRow): Product {
     name: row.name,
     categoryId: row.category_id,
     price: Number(row.price),
+    compareAtPrice: row.compare_at_price === null ? null : Number(row.compare_at_price),
     description: row.description,
     imageUrl: row.image_url,
     colorway: row.colorway,
@@ -55,6 +57,7 @@ export async function createProduct(input: ProductInput): Promise<Product> {
       name: input.name,
       category_id: input.categoryId,
       price: input.price,
+      compare_at_price: input.compareAtPrice,
       description: input.description,
       image_url: input.imageUrl,
       colorway: input.colorway,
@@ -79,6 +82,7 @@ export async function updateProduct(id: string, patch: Partial<ProductInput>): P
   if (patch.name !== undefined) productPatch.name = patch.name;
   if (patch.categoryId !== undefined) productPatch.category_id = patch.categoryId;
   if (patch.price !== undefined) productPatch.price = patch.price;
+  if (patch.compareAtPrice !== undefined) productPatch.compare_at_price = patch.compareAtPrice;
   if (patch.description !== undefined) productPatch.description = patch.description;
   if (patch.imageUrl !== undefined) productPatch.image_url = patch.imageUrl;
   if (patch.colorway !== undefined) productPatch.colorway = patch.colorway;
