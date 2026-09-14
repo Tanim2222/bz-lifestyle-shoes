@@ -3,6 +3,7 @@ import { Menu, LogOut, ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import NotificationBell from "./NotificationBell";
 
 export default function TopHeader({ title, onMenuClick }: { title: string; onMenuClick: () => void }) {
   const { user, logout } = useAuth();
@@ -27,7 +28,9 @@ export default function TopHeader({ title, onMenuClick }: { title: string; onMen
         <h1 className="text-lg sm:text-xl font-semibold text-white">{title}</h1>
       </div>
 
-      <div className="relative">
+      <div className="flex items-center gap-3">
+        <NotificationBell />
+        <div className="relative">
         <button
           onClick={() => setMenuOpen((v) => !v)}
           className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
@@ -66,6 +69,7 @@ export default function TopHeader({ title, onMenuClick }: { title: string; onMen
             </>
           )}
         </AnimatePresence>
+        </div>
       </div>
     </header>
   );

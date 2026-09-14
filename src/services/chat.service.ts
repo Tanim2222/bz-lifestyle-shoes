@@ -1,5 +1,7 @@
 import { supabase } from "../admin/services/supabaseClient";
 
+export type TicketPriority = "low" | "normal" | "high";
+
 export interface ChatMessage {
   id: string;
   conversationId: string;
@@ -11,18 +13,24 @@ export interface ChatMessage {
 
 export interface ChatConversation {
   id: string;
+  ticketNumber: string;
   customerId: string;
   customerName: string;
   status: "open" | "closed";
+  priority: TicketPriority;
+  unreadByAdmin: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 interface ConversationRow {
   id: string;
+  ticket_number: string;
   customer_id: string;
   customer_name: string;
   status: "open" | "closed";
+  priority: TicketPriority;
+  unread_by_admin: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -39,9 +47,12 @@ interface MessageRow {
 function mapConversation(row: ConversationRow): ChatConversation {
   return {
     id: row.id,
+    ticketNumber: row.ticket_number,
     customerId: row.customer_id,
     customerName: row.customer_name,
     status: row.status,
+    priority: row.priority,
+    unreadByAdmin: row.unread_by_admin,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -58,6 +69,10 @@ function mapMessage(row: MessageRow): ChatMessage {
   };
 }
 
+function generateTicketNumber(): string {
+  return `TCK-${Math.floor(10000 + Math.random() * 90000)}`;
+}
+
 // Every customer has at most one conversation — fetch it, or create it on
 // their first message.
 export async function getOrCreateConversation(customerId: string, customerName: string): Promise<ChatConversation> {
@@ -66,7 +81,7 @@ export async function getOrCreateConversation(customerId: string, customerName: 
 
   const { data, error } = await supabase
     .from("chat_conversations")
-    .insert({ customer_id: customerId, customer_name: customerName })
+    .insert({ customer_id: customerId, customer_name: customerName, ticket_number: generateTicketNumber() })
     .select()
     .single();
   if (error) throw new Error(error.message);
@@ -94,8 +109,12 @@ export async function sendMessage(
     .insert({ conversation_id: conversationId, sender_type: senderType, sender_name: senderName, body });
   if (error) throw new Error(error.message);
 
-  // Bumps updated_at so the admin inbox can sort by most-recently-active.
-  await supabase.from("chat_conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
+  // A customer message re-flags the ticket unread for admin; an admin reply
+  // clears it. Also bumps updated_at so the inbox sorts by latest activity.
+  await supabase
+    .from("chat_conversations")
+    .update({ updated_at: new Date().toISOString(), unread_by_admin: senderType === "customer" })
+    .eq("id", conversationId);
 }
 
 export function subscribeToMessages(conversationId: string, onInsert: (message: ChatMessage) => void): () => void {
@@ -135,4 +154,23 @@ export function subscribeToConversations(onChange: () => void): () => void {
 export async function setConversationStatus(conversationId: string, status: "open" | "closed"): Promise<void> {
   const { error } = await supabase.from("chat_conversations").update({ status }).eq("id", conversationId);
   if (error) throw new Error(error.message);
+}
+
+export async function setConversationPriority(conversationId: string, priority: TicketPriority): Promise<void> {
+  const { error } = await supabase.from("chat_conversations").update({ priority }).eq("id", conversationId);
+  if (error) throw new Error(error.message);
+}
+
+export async function markConversationRead(conversationId: string): Promise<void> {
+  const { error } = await supabase.from("chat_conversations").update({ unread_by_admin: false }).eq("id", conversationId);
+  if (error) throw new Error(error.message);
+}
+
+export async function getUnreadTicketCount(): Promise<number> {
+  const { count, error } = await supabase
+    .from("chat_conversations")
+    .select("id", { count: "exact", head: true })
+    .eq("unread_by_admin", true);
+  if (error) throw new Error(error.message);
+  return count ?? 0;
 }

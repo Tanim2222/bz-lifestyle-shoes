@@ -9,6 +9,7 @@ export default function ChatWidget() {
   const { customer, openAuthModal } = useCustomerAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [ticketNumber, setTicketNumber] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -34,6 +35,7 @@ export default function ChatWidget() {
       .getOrCreateConversation(customer.id, customer.name)
       .then(async (conversation) => {
         setConversationId(conversation.id);
+        setTicketNumber(conversation.ticketNumber);
         const history = await chatService.listMessages(conversation.id);
         setMessages(history);
         unsubscribe = chatService.subscribeToMessages(conversation.id, (message) => {
@@ -97,7 +99,7 @@ export default function ChatWidget() {
             <div className="bg-black text-white px-4 py-3.5 flex items-center justify-between shrink-0">
               <div>
                 <p className="font-bold text-sm tracking-wide">Customer Service</p>
-                <p className="text-[11px] text-white/60">We usually reply within a few hours</p>
+                <p className="text-[11px] text-white/60">{ticketNumber ? `Ticket ${ticketNumber}` : "We usually reply within a few hours"}</p>
               </div>
               <button onClick={() => setIsOpen(false)} className="text-white/60 hover:text-white cursor-pointer" aria-label="Close chat">
                 <X className="w-4.5 h-4.5" />

@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import EmptyState from "../../components/EmptyState";
 import Spinner from "../../components/Spinner";
 import * as chatService from "../../../services/chat.service";
-import type { ChatConversation, ChatMessage } from "../../../services/chat.service";
+import type { ChatConversation, ChatMessage, TicketPriority } from "../../../services/chat.service";
 
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -15,6 +15,20 @@ function timeAgo(iso: string): string {
   if (hours < 24) return `${hours}h ago`;
   return new Date(iso).toLocaleDateString("en-PH", { month: "short", day: "numeric" });
 }
+
+const PRIORITY_STYLES: Record<TicketPriority, string> = {
+  high: "bg-red-500/15 text-red-300 border-red-500/30",
+  normal: "bg-white/5 text-white/50 border-white/10",
+  low: "bg-white/5 text-white/30 border-white/10",
+};
+
+const CANNED_REPLIES = [
+  { label: "Checking now", text: "Hi! Thanks for reaching out — let me check that for you." },
+  { label: "Ask for order #", text: "Could you share your order number so I can look into this?" },
+  { label: "Order shipped", text: "Your order has shipped! You can find the tracking number under My Orders in your account." },
+  { label: "Apologize", text: "Sorry for the inconvenience — we'll get this sorted out right away." },
+  { label: "Resolved", text: "Glad we could sort this out! Let us know if anything else comes up." },
+];
 
 export default function ChatInbox() {
   const { user } = useAuth();
@@ -48,10 +62,12 @@ export default function ChatInbox() {
       setMessages(data);
       setIsLoadingThread(false);
     });
+    chatService.markConversationRead(selectedId).then(loadConversations);
     const unsubscribe = chatService.subscribeToMessages(selectedId, (message) => {
       setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
     });
     return unsubscribe;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
   useEffect(() => {
@@ -82,6 +98,12 @@ export default function ChatInbox() {
     loadConversations();
   };
 
+  const handlePriorityChange = async (priority: TicketPriority) => {
+    if (!selectedId) return;
+    await chatService.setConversationPriority(selectedId, priority);
+    loadConversations();
+  };
+
   if (isLoadingList) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -91,7 +113,7 @@ export default function ChatInbox() {
   }
 
   if (conversations.length === 0) {
-    return <EmptyState icon={MessageCircle} title="No customer messages yet" description="Conversations started from the storefront chat widget will show up here." />;
+    return <EmptyState icon={MessageCircle} title="No support tickets yet" description="Conversations started from the storefront chat widget will show up here." />;
   }
 
   return (
@@ -106,10 +128,19 @@ export default function ChatInbox() {
             }`}
           >
             <div className="flex items-center justify-between gap-2">
-              <p className="font-medium text-sm text-white truncate">{c.customerName}</p>
+              <div className="flex items-center gap-1.5 min-w-0">
+                {c.unreadByAdmin && <span className="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0" />}
+                <p className="font-medium text-sm text-white truncate">{c.customerName}</p>
+              </div>
               {c.status === "closed" && <CheckCircle2 className="w-3.5 h-3.5 text-teal-400 shrink-0" />}
             </div>
-            <p className="text-[11px] text-white/40 mt-0.5">{timeAgo(c.updatedAt)}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-[11px] text-white/40 font-mono">{c.ticketNumber}</span>
+              {c.priority !== "normal" && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded border capitalize ${PRIORITY_STYLES[c.priority]}`}>{c.priority}</span>
+              )}
+            </div>
+            <p className="text-[11px] text-white/30 mt-0.5">{timeAgo(c.updatedAt)}</p>
           </button>
         ))}
       </aside>
@@ -119,19 +150,32 @@ export default function ChatInbox() {
           <div className="flex-1 flex items-center justify-center text-white/40 text-sm">Select a conversation</div>
         ) : (
           <>
-            <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between shrink-0">
+            <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between shrink-0 gap-3 flex-wrap">
               <div>
                 <p className="font-bold text-sm text-white">{selected.customerName}</p>
-                <p className="text-[11px] text-white/40 capitalize">{selected.status}</p>
+                <p className="text-[11px] text-white/40 font-mono">
+                  {selected.ticketNumber} · <span className="capitalize">{selected.status}</span>
+                </p>
               </div>
-              {selected.status === "open" && (
-                <button
-                  onClick={handleResolve}
-                  className="text-xs font-medium text-teal-300 border border-teal-400/30 rounded-lg px-3 py-1.5 hover:bg-teal-400/10 cursor-pointer"
+              <div className="flex items-center gap-2">
+                <select
+                  value={selected.priority}
+                  onChange={(e) => handlePriorityChange(e.target.value as TicketPriority)}
+                  className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white capitalize focus:outline-none focus:ring-2 focus:ring-teal-400/40 cursor-pointer"
                 >
-                  Mark Resolved
-                </button>
-              )}
+                  <option value="low" className="bg-neutral-900">Low priority</option>
+                  <option value="normal" className="bg-neutral-900">Normal priority</option>
+                  <option value="high" className="bg-neutral-900">High priority</option>
+                </select>
+                {selected.status === "open" && (
+                  <button
+                    onClick={handleResolve}
+                    className="text-xs font-medium text-teal-300 border border-teal-400/30 rounded-lg px-3 py-1.5 hover:bg-teal-400/10 cursor-pointer"
+                  >
+                    Mark Resolved
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
@@ -153,7 +197,20 @@ export default function ChatInbox() {
               <div ref={bottomRef} />
             </div>
 
-            <form onSubmit={handleSend} className="p-3.5 border-t border-white/10 flex items-center gap-2 shrink-0">
+            <div className="px-3.5 pt-2 flex gap-1.5 flex-wrap shrink-0">
+              {CANNED_REPLIES.map((r) => (
+                <button
+                  key={r.label}
+                  type="button"
+                  onClick={() => setDraft(r.text)}
+                  className="text-[11px] text-white/60 border border-white/10 rounded-full px-2.5 py-1 hover:bg-white/5 hover:text-white transition-colors cursor-pointer"
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+
+            <form onSubmit={handleSend} className="p-3.5 flex items-center gap-2 shrink-0">
               <input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
