@@ -68,3 +68,11 @@ export async function getMyOrders(customerId: string): Promise<CustomerOrder[]> 
   if (error) throw new Error(error.message);
   return (data as OrderRow[]).map(mapRow);
 }
+
+// RLS ("customers cancel own order") only allows this to succeed while the
+// order is still 'pending' or 'paid', and only ever TO 'cancelled' — so a
+// stale/tampered request just fails, no extra guard needed here.
+export async function cancelOrder(orderId: string): Promise<void> {
+  const { error } = await supabase.from("orders").update({ status: "cancelled" }).eq("id", orderId);
+  if (error) throw new Error(error.message);
+}

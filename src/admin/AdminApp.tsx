@@ -12,6 +12,7 @@ import OrderDetail from "./pages/orders/OrderDetail";
 import CustomersList from "./pages/customers/CustomersList";
 import CustomerDetail from "./pages/customers/CustomerDetail";
 import PromotionsList from "./pages/promotions/PromotionsList";
+import ChatInbox from "./pages/support/ChatInbox";
 import Reports from "./pages/reports/Reports";
 import Settings from "./pages/settings/Settings";
 
@@ -39,6 +40,7 @@ export default function AdminApp() {
           <Route path="customers" element={<CustomersList />} />
           <Route path="customers/:customerId" element={<CustomerDetail />} />
           <Route path="promotions" element={<PromotionsList />} />
+          <Route path="support" element={<ChatInbox />} />
           <Route path="reports" element={<Reports />} />
           <Route
             path="settings"

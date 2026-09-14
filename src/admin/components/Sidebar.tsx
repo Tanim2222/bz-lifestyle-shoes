@@ -10,6 +10,7 @@ import {
   Percent,
   BarChart3,
   Settings,
+  MessageCircle,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { to: "/admin/inventory", label: "Inventory", icon: Boxes },
   { to: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { to: "/admin/customers", label: "Customers", icon: Users },
+  { to: "/admin/support", label: "Support", icon: MessageCircle },
   { to: "/admin/promotions", label: "Promotions", icon: Percent },
   { to: "/admin/reports", label: "Reports", icon: BarChart3 },
 ];

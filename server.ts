@@ -1,6 +1,7 @@
 import "dotenv/config";
 import crypto from "crypto";
 import express from "express";
+import rateLimit from "express-rate-limit";
 import { createClient } from "@supabase/supabase-js";
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 8787;
@@ -105,6 +106,18 @@ app.post("/api/paymongo-webhook", express.raw({ type: "application/json" }), asy
 });
 
 app.use(express.json({ limit: "15mb" }));
+
+// Generous general ceiling against runaway/scripted traffic on every /api
+// route, plus a tighter one on signup specifically since that's the route
+// most attractive to abuse (spam account creation).
+app.use(
+  "/api",
+  rateLimit({ windowMs: 15 * 60 * 1000, limit: 200, standardHeaders: true, legacyHeaders: false })
+);
+app.use(
+  "/api/customers/signup",
+  rateLimit({ windowMs: 60 * 60 * 1000, limit: 10, standardHeaders: true, legacyHeaders: false })
+);
 
 app.post("/api/generate-product-image", async (req, res) => {
   const { prompt, baseImage } = req.body as {
@@ -301,6 +314,47 @@ interface CheckoutCustomer {
 // payment page, not an address form, and its `billing` object (used only as
 // a fallback in the webhook below) is not guaranteed to include a delivery
 // address, especially for e-wallet methods like GCash/Maya.
+// Looks up a promo code server-side (the promotions table is admin-only in
+// RLS, so the client can't query it directly) and reports back whether it's
+// usable right now, plus enough info to preview the discount before checkout.
+app.post("/api/validate-promo", async (req, res) => {
+  const adminClient = supabaseAdmin();
+  if (!adminClient) {
+    res.status(500).json({ valid: false, error: "Supabase service role is not configured on the server." });
+    return;
+  }
+  const { code } = req.body as { code?: string };
+  if (!code?.trim()) {
+    res.status(400).json({ valid: false, error: "Enter a promo code." });
+    return;
+  }
+
+  const { data: promo } = await adminClient
+    .from("promotions")
+    .select("id, code, description, discount_type, value, start_date, end_date, active")
+    .ilike("code", code.trim())
+    .maybeSingle();
+
+  if (!promo || !promo.active) {
+    res.json({ valid: false, error: "That code isn't valid." });
+    return;
+  }
+  const now = new Date();
+  if (now < new Date(promo.start_date) || now > new Date(promo.end_date)) {
+    res.json({ valid: false, error: "That code has expired." });
+    return;
+  }
+
+  res.json({
+    valid: true,
+    promotionId: promo.id,
+    code: promo.code,
+    description: promo.description,
+    discountType: promo.discount_type,
+    value: Number(promo.value),
+  });
+});
+
 app.post("/api/create-checkout-session", async (req, res) => {
   if (!paymongoSecretKey) {
     res.status(500).json({ error: "PayMongo is not configured on the server. Add PAYMONGO_SECRET_KEY to .env and restart `npm run server`." });
@@ -312,10 +366,11 @@ app.post("/api/create-checkout-session", async (req, res) => {
     return;
   }
 
-  const { items, customer, shippingAddress } = req.body as {
+  const { items, customer, shippingAddress, promoCode } = req.body as {
     items?: CheckoutCartItem[];
     customer?: CheckoutCustomer;
     shippingAddress?: string;
+    promoCode?: string;
   };
   if (!items || items.length === 0) {
     res.status(400).json({ error: "Cart is empty." });
@@ -351,7 +406,29 @@ app.post("/api/create-checkout-session", async (req, res) => {
   try {
     const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const shippingFee = subtotal >= 2000 ? 0 : 150;
-    const total = subtotal + shippingFee;
+
+    // Re-validated here rather than trusting a client-supplied discount —
+    // same rules as /api/validate-promo, just re-checked at the moment of
+    // payment (a code could expire between the customer typing it and
+    // clicking "Pay").
+    let promotionId: string | null = null;
+    let discountAmount = 0;
+    if (promoCode?.trim()) {
+      const { data: promo } = await adminClient
+        .from("promotions")
+        .select("id, discount_type, value, start_date, end_date, active")
+        .ilike("code", promoCode.trim())
+        .maybeSingle();
+      const now = new Date();
+      if (promo && promo.active && now >= new Date(promo.start_date) && now <= new Date(promo.end_date)) {
+        promotionId = promo.id;
+        discountAmount =
+          promo.discount_type === "percentage" ? Math.round(subtotal * (Number(promo.value) / 100)) : Math.round(Number(promo.value));
+        discountAmount = Math.min(discountAmount, subtotal);
+      }
+    }
+
+    const total = subtotal + shippingFee - discountAmount;
     const orderNumber = `BZ-${Math.floor(10000 + Math.random() * 90000)}`;
 
     const { data: order, error: orderError } = await adminClient
@@ -365,6 +442,8 @@ app.post("/api/create-checkout-session", async (req, res) => {
         status: "pending",
         subtotal,
         shipping_fee: shippingFee,
+        discount_amount: discountAmount,
+        promotion_id: promotionId,
         total,
         shipping_address: shippingAddress,
         payment_method: "PayMongo",
@@ -372,6 +451,13 @@ app.post("/api/create-checkout-session", async (req, res) => {
       .select()
       .single();
     if (orderError) throw orderError;
+
+    if (promotionId) {
+      await adminClient.rpc("increment_promotion_usage", { promo_id: promotionId }).then(
+        () => {},
+        () => {} // Non-fatal — the order itself already recorded which code was used.
+      );
+    }
 
     const { error: itemsError } = await adminClient.from("order_items").insert(
       items.map((item) => ({
@@ -403,6 +489,19 @@ app.post("/api/create-checkout-session", async (req, res) => {
         quantity: 1,
         images: undefined,
       });
+    }
+
+    // PayMongo checkout sessions don't support a negative-amount "discount"
+    // line item, so the discount is applied by shaving centavos off the
+    // existing lines instead — shipping first, then item lines from the end,
+    // until the total charged matches (subtotal + shipping - discount)
+    // exactly. Never goes below 0 since discountAmount is capped at subtotal.
+    let remainingDiscountCentavos = Math.round(discountAmount * 100);
+    for (let i = lineItems.length - 1; i >= 0 && remainingDiscountCentavos > 0; i--) {
+      const lineTotal = lineItems[i].amount * lineItems[i].quantity;
+      const reduceBy = Math.min(remainingDiscountCentavos, lineTotal);
+      lineItems[i].amount -= Math.floor(reduceBy / lineItems[i].quantity);
+      remainingDiscountCentavos -= reduceBy;
     }
 
     const paymongoResponse = await fetch(`${PAYMONGO_API}/checkout_sessions`, {
@@ -453,7 +552,7 @@ app.get("/api/checkout-session/:orderId", async (req, res) => {
     const { data: order, error } = await adminClient
       .from("orders")
       .select(
-        "order_number, status, total, customer_email, tracking_number, courier, shipped_at, order_items(product_name, size, quantity, unit_price)"
+        "order_number, status, subtotal, shipping_fee, discount_amount, total, customer_email, tracking_number, courier, shipped_at, order_items(product_name, size, quantity, unit_price)"
       )
       .eq("id", req.params.orderId)
       .maybeSingle();

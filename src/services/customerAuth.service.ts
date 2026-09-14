@@ -49,6 +49,21 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
 }
 
+// Supabase emails a recovery link that lands back on /reset-password with a
+// token in the URL; the client picks that up automatically and starts a
+// recovery session there, where the user sets a new password.
+export async function requestPasswordReset(email: string): Promise<void> {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function updatePassword(newPassword: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw new Error(error.message);
+}
+
 // Used on app load to restore a session that already exists (page refresh).
 export async function getCurrentCustomer(): Promise<CustomerProfile | null> {
   const { data: sessionData } = await supabase.auth.getSession();

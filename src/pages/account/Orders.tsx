@@ -21,18 +21,36 @@ const STATUS_STYLES: Record<string, string> = {
   cancelled: "bg-red-50 text-red-600",
 };
 
+const CANCELLABLE_STATUSES = new Set(["pending", "paid"]);
+
 export default function Orders() {
   const { customer } = useCustomerAuth();
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = () => {
     if (!customer) return;
     customerOrdersService.getMyOrders(customer.id).then((data) => {
       setOrders(data);
       setIsLoading(false);
     });
-  }, [customer]);
+  };
+
+  useEffect(load, [customer]);
+
+  const handleCancel = async (orderId: string) => {
+    if (!confirm("Cancel this order? This can't be undone.")) return;
+    setCancellingId(orderId);
+    try {
+      await customerOrdersService.cancelOrder(orderId);
+      load();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not cancel this order.");
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   return (
     <div>
@@ -73,13 +91,22 @@ export default function Orders() {
                 ))}
               </div>
 
-              <div className="flex items-center justify-between pt-3 border-t border-neutral-100">
+              <div className="flex items-center justify-between pt-3 border-t border-neutral-100 gap-3 flex-wrap">
                 <span className="text-sm font-bold text-neutral-900">Total: {formatPeso(order.total)}</span>
                 {order.trackingNumber && (
                   <div className="flex items-center gap-1.5 text-xs text-teal-600">
                     <Truck className="w-3.5 h-3.5" />
                     <span className="font-mono">{order.trackingNumber}</span>
                   </div>
+                )}
+                {CANCELLABLE_STATUSES.has(order.status) && (
+                  <button
+                    onClick={() => handleCancel(order.id)}
+                    disabled={cancellingId === order.id}
+                    className="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50 cursor-pointer"
+                  >
+                    {cancellingId === order.id ? "Cancelling…" : "Cancel Order"}
+                  </button>
                 )}
               </div>
             </div>

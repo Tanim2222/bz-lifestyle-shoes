@@ -4,6 +4,7 @@ import {BrowserRouter, Routes, Route} from 'react-router-dom';
 import App from './App.tsx';
 import AdminApp from './admin/AdminApp.tsx';
 import OrderConfirmation from './pages/OrderConfirmation.tsx';
+import ResetPassword from './pages/ResetPassword.tsx';
 import AccountApp from './pages/account/AccountApp.tsx';
 import { CustomerAuthProvider } from './context/CustomerAuthContext.tsx';
 import { WishlistProvider } from './context/WishlistContext.tsx';
@@ -19,6 +20,7 @@ createRoot(document.getElementById('root')!).render(
             <Routes>
               <Route path="/admin/*" element={<AdminApp />} />
               <Route path="/order-confirmation" element={<OrderConfirmation />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/account/*" element={<AccountApp />} />
               <Route path="/*" element={<App />} />
             </Routes>

@@ -7,6 +7,7 @@ import { supabase } from "../../admin/services/supabaseClient";
 import * as addressesService from "../../services/customerAddresses.service";
 import AddressFields, { EMPTY_ADDRESS_LOCATION, formatAddressLocation, type AddressLocationValue } from "../AddressFields";
 import type { CustomerAddress } from "../../types/customerAccount";
+import { calculateDiscount } from "../../utils/discount";
 
 function formatPeso(value: number): string {
   return `₱${value.toLocaleString("en-PH")}`;
@@ -48,6 +49,11 @@ export default function CartDrawer() {
   const [shipping, setShipping] = useState<ShippingForm>(EMPTY_SHIPPING);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountType: "percentage" | "fixed"; value: number } | null>(null);
+  const [promoError, setPromoError] = useState("");
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
 
   const [savedAddresses, setSavedAddresses] = useState<CustomerAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
@@ -114,6 +120,32 @@ export default function CartDrawer() {
     if (addr) setShipping((prev) => toShippingForm(prev.name, prev.email, prev.phone, addr));
   };
 
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return;
+    setIsValidatingPromo(true);
+    setPromoError("");
+    try {
+      const response = await fetch("/api/validate-promo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoInput.trim() }),
+      });
+      const json = await response.json();
+      if (!json.valid) {
+        setPromoError(json.error ?? "That code isn't valid.");
+        setAppliedPromo(null);
+        return;
+      }
+      setAppliedPromo({ code: json.code, discountType: json.discountType, value: json.value });
+    } catch {
+      setPromoError("Could not check that code — try again.");
+    } finally {
+      setIsValidatingPromo(false);
+    }
+  };
+
+  const discountAmount = appliedPromo ? calculateDiscount(subtotal, appliedPromo.discountType, appliedPromo.value) : 0;
+
   const handleShippingSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setCheckoutError("");
@@ -135,6 +167,7 @@ export default function CartDrawer() {
           items,
           customer: { name: shipping.name, email: shipping.email, phone: shipping.phone },
           shippingAddress,
+          promoCode: appliedPromo?.code,
         }),
       });
       const json = await response.json();
@@ -277,10 +310,50 @@ export default function CartDrawer() {
 
             {items.length > 0 && (
               <div className="border-t border-neutral-200 px-5 py-4 flex flex-col gap-3">
+                {appliedPromo ? (
+                  <div className="flex items-center justify-between bg-teal-50 border border-teal-100 rounded-xl px-3 py-2">
+                    <span className="text-xs font-semibold text-teal-700">"{appliedPromo.code}" applied</span>
+                    <button
+                      onClick={() => {
+                        setAppliedPromo(null);
+                        setPromoInput("");
+                      }}
+                      className="text-[11px] text-teal-600 hover:underline cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    <div className="flex gap-2">
+                      <input
+                        value={promoInput}
+                        onChange={(e) => setPromoInput(e.target.value)}
+                        placeholder="Promo code"
+                        className="flex-1 border border-neutral-200 rounded-xl px-3 py-2 text-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900/10"
+                      />
+                      <button
+                        onClick={handleApplyPromo}
+                        disabled={isValidatingPromo || !promoInput.trim()}
+                        className="px-4 py-2 rounded-xl bg-neutral-100 text-neutral-700 text-xs font-bold hover:bg-neutral-200 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {isValidatingPromo ? "..." : "Apply"}
+                      </button>
+                    </div>
+                    {promoError && <p className="text-[11px] text-red-500">{promoError}</p>}
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-neutral-500">Subtotal</span>
                   <span className="font-bold text-neutral-900">{formatPeso(subtotal)}</span>
                 </div>
+                {discountAmount > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-teal-600">Discount</span>
+                    <span className="font-bold text-teal-600">-{formatPeso(discountAmount)}</span>
+                  </div>
+                )}
                 {checkoutError && <p className="text-xs text-red-500">{checkoutError}</p>}
                 {step === "cart" ? (
                   <button

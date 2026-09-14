@@ -1,5 +1,6 @@
 import { useState } from "react";
 import CartDrawer from "./components/landing/CartDrawer";
+import ChatWidget from "./components/landing/ChatWidget";
 import AnnouncementBar from "./components/landing/AnnouncementBar";
 import Header from "./components/landing/Header";
 import HeroCarousel from "./components/landing/HeroCarousel";
@@ -28,6 +29,7 @@ export default function App() {
       <AnnouncementBar />
       <Header />
       <CartDrawer />
+      <ChatWidget />
 
       <main className="flex flex-col pb-8">
         <HeroCarousel />

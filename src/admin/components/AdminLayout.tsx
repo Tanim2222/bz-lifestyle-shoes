@@ -9,6 +9,7 @@ const TITLES: { match: string; title: string }[] = [
   { match: "/admin/inventory", title: "Inventory" },
   { match: "/admin/orders", title: "Orders" },
   { match: "/admin/customers", title: "Customers" },
+  { match: "/admin/support", title: "Support" },
   { match: "/admin/promotions", title: "Promotions" },
   { match: "/admin/reports", title: "Reports" },
   { match: "/admin/settings", title: "Settings" },

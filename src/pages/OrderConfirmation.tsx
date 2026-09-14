@@ -6,6 +6,9 @@ import logoBZLI from "../../assets/logo/logoBZLI.png";
 interface ConfirmedOrder {
   order_number: string;
   status: string;
+  subtotal: number;
+  shipping_fee: number;
+  discount_amount: number;
   total: number;
   customer_email: string;
   tracking_number: string | null;
@@ -131,6 +134,18 @@ export default function OrderConfirmation() {
                 <span className="font-semibold text-neutral-900">{formatPeso(item.unit_price * item.quantity)}</span>
               </div>
             ))}
+            {order.shipping_fee > 0 && (
+              <div className="flex justify-between text-sm text-neutral-500">
+                <span>Shipping</span>
+                <span>{formatPeso(order.shipping_fee)}</span>
+              </div>
+            )}
+            {order.discount_amount > 0 && (
+              <div className="flex justify-between text-sm text-teal-600">
+                <span>Discount</span>
+                <span>-{formatPeso(order.discount_amount)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-sm font-bold pt-2 border-t border-neutral-100">
               <span>Total</span>
               <span>{formatPeso(order.total)}</span>
